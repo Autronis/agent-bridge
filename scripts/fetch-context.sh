@@ -72,9 +72,10 @@ AGENDA_FILE="${TMP_BASE}-agenda.json"
 UREN_FILE="${TMP_BASE}-uren.json"
 GTM_FILE="${TMP_BASE}-gtm.json"
 BRIDGE_CTX_FILE="${TMP_BASE}-bridge-ctx.json"
+WERKUREN_FILE="${TMP_BASE}-werkuren.json"
 
 cleanup() {
-  rm -f "$TAKEN_FILE" "$SLIM_FILE" "$AGENDA_FILE" "$UREN_FILE" "$GTM_FILE" "$BRIDGE_CTX_FILE"
+  rm -f "$TAKEN_FILE" "$SLIM_FILE" "$AGENDA_FILE" "$UREN_FILE" "$GTM_FILE" "$BRIDGE_CTX_FILE" "$WERKUREN_FILE"
 }
 trap cleanup EXIT
 
@@ -101,6 +102,7 @@ fetch_endpoint "$AGENDA_FILE" "/api/agenda?van=${MORGEN}&tot=${MORGEN}"         
 fetch_endpoint "$UREN_FILE"   "/api/briefing/uren-deze-week"                     "uren_week"
 fetch_endpoint "$GTM_FILE"    "/api/gtm-ritme"                                   "gtm_ritme"
 fetch_endpoint "$BRIDGE_CTX_FILE" "/api/bridge/context?user=${USER_NAME}"        "bridge_context"
+fetch_endpoint "$WERKUREN_FILE"   "/api/werkuren?user=${USER_NAME}"              "werkuren"
 
 # Compose the final JSON. Alle inputs via env-vars (geen string injection).
 USER_NAME="$USER_NAME" \
@@ -111,6 +113,7 @@ AGENDA_FILE="$AGENDA_FILE" \
 UREN_FILE="$UREN_FILE" \
 GTM_FILE="$GTM_FILE" \
 BRIDGE_CTX_FILE="$BRIDGE_CTX_FILE" \
+WERKUREN_FILE="$WERKUREN_FILE" \
 python3 <<'PY'
 import json, os, sys
 
@@ -138,11 +141,13 @@ agenda_doc = load_json(os.environ["AGENDA_FILE"], "agenda_morgen")
 uren_doc   = load_json(os.environ["UREN_FILE"],   "uren_week")
 gtm_doc    = load_json(os.environ["GTM_FILE"],    "gtm_ritme")
 bridge_ctx = load_json(os.environ["BRIDGE_CTX_FILE"], "bridge_context")
+werkuren_doc = load_json(os.environ["WERKUREN_FILE"], "werkuren")
 
 # Warn on API-level error envelopes ({fout: "..."}).
 for label, doc in (("taken", taken_doc), ("slimme_taken", slim_doc),
                    ("agenda_morgen", agenda_doc), ("uren_week", uren_doc),
-                   ("gtm_ritme", gtm_doc), ("bridge_context", bridge_ctx)):
+                   ("gtm_ritme", gtm_doc), ("bridge_context", bridge_ctx),
+                   ("werkuren", werkuren_doc)):
     if isinstance(doc, dict) and "fout" in doc:
         print(f"fetch-context: warn: {label} API returned fout: {doc.get('fout')}", file=sys.stderr)
 
@@ -151,6 +156,7 @@ taken_list   = pick_list(taken_doc,  ["taken"])
 slim_list    = pick_list(slim_doc,   ["actief", "templates", "slimmeTaken", "data"])
 agenda_list  = pick_list(agenda_doc, ["items"])
 gtm_list     = pick_list(gtm_doc,    ["slots"])
+werkuren_list = pick_list(werkuren_doc, ["slots"])
 
 uren_week = uren_doc if isinstance(uren_doc, dict) and "fout" not in uren_doc else {}
 
@@ -162,6 +168,7 @@ out = {
     "agenda_morgen": agenda_list,
     "uren_week": uren_week,
     "gtm_ritme": gtm_list,
+    "werkuren_slots": werkuren_list,
     "leads_pipeline": bridge_ctx.get("leads_pipeline", []) if isinstance(bridge_ctx, dict) else [],
     "klanten_actief": bridge_ctx.get("klanten_actief", []) if isinstance(bridge_ctx, dict) else [],
     "projecten_lopend": bridge_ctx.get("projecten_lopend", []) if isinstance(bridge_ctx, dict) else [],

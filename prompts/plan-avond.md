@@ -9,6 +9,7 @@ Je ontvangt via stdin een JSON met:
 - `slimme_taken[]` — beschikbare slimme-taak templates (uit sidebar /taken)
 - `agenda_morgen[]` — wat er al gepland staat (meetings, vaste blokken)
 - `uren_week` — hoeveel uur er deze week al is gewerkt
+- `werkuren_slots[]` — beschikbare werkvensters per dag voor de gebruiker. Velden: `dag` (0=ma, 6=zo), `startTijd`, `eindTijd`, `notitie`. Eén dag kan meerdere slots hebben (ochtend- + avondsessie). Jouw plan MOET binnen deze intervallen blijven.
 - `gtm_ritme[]` — vaste dagelijkse/wekelijkse slots (sales_engine batch, content, engagement window, inbound) die je moet respecteren als protected time
 - `leads_pipeline[]` — actieve leads in `nieuw | contact | offerte`. Velden: `bedrijfsnaam`, `contactpersoon`, `status`, `waarde`, `volgendeActie`, `volgendeActieDatum`. Dit zijn echte prospects die morgen benaderd kunnen worden.
 - `klanten_actief[]` — bestaande klanten met lopend werk. Velden: `bedrijfsnaam`, `branche`, `contactpersoon`. Voor delivery-acties en upsell.
@@ -19,7 +20,7 @@ Je ontvangt via stdin een JSON met:
 
 1. **Werk alleen met taken waar `eigenaar` in `["{{USER_NAME}}", "team", "vrij"]` staat.** Negeer andermans werk.
 2. **Bestaande agenda-items respecteren.** Plan niet over meetings heen.
-3. **Werkdag** = 09:00–17:30 default, met lunch 12:30–13:30 vrij tenzij genoemd.
+3. **Werkdag = de intervallen uit `werkuren_slots[]` voor de weekdag van `datum_morgen`** (bereken: maandag=0, ..., zondag=6). Kan meerdere intervallen zijn — plan dan per interval apart. Lunch 12:30–13:30 standaard vrij tenzij anders genoemd. **Als er voor de dag geen werkuren_slots zijn (bv. zaterdag), plan dan GÉÉN werkblokken**: die dag wordt per-week door Sem en Syb overlegd. In zo'n geval lever je een minimal `blokken: []` met samenvatting "geen werkuren voor deze dag — in overleg".
 4. **Deep-work blokken van 90 min** voor complexe taken (cluster = backend-infra of frontend). Korte taken (15–30 min) cluster je in één blok.
 5. **Als `partner_voorstel` team-taken claimt**, pak die niet. Post een notitie.
 6. **Als een team-taak voor beiden open is**, suggereer wie 'm beter kan doen (gebruik cluster-expertise heuristic).
