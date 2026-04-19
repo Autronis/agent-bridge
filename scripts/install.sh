@@ -9,11 +9,23 @@ if [[ ! -f "$CONFIG_PATH" ]]; then
   exit 1
 fi
 
-USER_NAME=$(python3 -c "import json,os,sys; print(json.load(open(os.path.expanduser('$CONFIG_PATH')))['user'])")
-ATLAS_TIME=$(python3 -c "import json,os; print(json.load(open(os.path.expanduser('$CONFIG_PATH')))['atlas_start_time'])")
-AUTRO_TIME=$(python3 -c "import json,os; print(json.load(open(os.path.expanduser('$CONFIG_PATH')))['autro_start_time'])")
+read_cfg() {
+  CONFIG_PATH="$CONFIG_PATH" python3 -c '
+import json, os, sys
+with open(os.environ["CONFIG_PATH"]) as f:
+    print(json.load(f)[sys.argv[1]])
+' "$1"
+}
 
-if [[ "$USER_NAME" == "sem" ]]; then TIME="$ATLAS_TIME"; else TIME="$AUTRO_TIME"; fi
+USER_NAME=$(read_cfg user)
+ATLAS_TIME=$(read_cfg atlas_start_time)
+AUTRO_TIME=$(read_cfg autro_start_time)
+
+case "$USER_NAME" in
+  sem) TIME="$ATLAS_TIME" ;;
+  syb) TIME="$AUTRO_TIME" ;;
+  *) echo "Fout: 'user' in $CONFIG_PATH moet 'sem' of 'syb' zijn (kreeg: '$USER_NAME')" >&2; exit 1 ;;
+esac
 HOUR=$(echo "$TIME" | cut -d: -f1)
 MIN=$(echo "$TIME" | cut -d: -f2)
 
