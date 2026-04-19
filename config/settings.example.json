@@ -1,0 +1,14 @@
+{
+  "user": "sem",
+  "role_name": "Atlas",
+  "partner_role_name": "Autro",
+  "atlas_start_time": "20:30",
+  "autro_start_time": "20:45",
+  "dashboard_url": "https://dashboard.autronis.nl",
+  "dashboard_api_key_file": "~/.config/autronis/claude-sync.json",
+  "discord_bot_script": "~/.claude/scripts/discord-bot.sh",
+  "planning_channel": "claude-handoffs",
+  "claude_binary": "/opt/homebrew/bin/claude",
+  "dry_run": false,
+  "log_dir": "~/Autronis/Projects/agent-bridge/logs"
+}

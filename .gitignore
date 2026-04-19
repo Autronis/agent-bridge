@@ -1,0 +1,6 @@
+# Lokale config en runtime artefacten
+config/settings.json
+*.log
+.DS_Store
+/launchd/*.installed.plist
+logs/
