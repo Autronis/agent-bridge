@@ -64,8 +64,46 @@ if [[ ! -f "$PLAN_JSON" ]]; then
   exit 1
 fi
 
-# Voor elk blok: POST /api/agenda. Skip type=buffer blocks.
-PLAN_JSON="$PLAN_JSON" URL="$DASHBOARD_URL" KEY="$API_KEY" python3 <<'PY'
+# BRIDGE_USER moet worden gezet door plan-avond.sh (sem|syb). Default 'vrij'
+# zodat individuele runs zonder user-context niet failen.
+BRIDGE_USER="${BRIDGE_USER:-vrij}"
+
+# Step 1: reset any prior bridge-generated rows for this (datum, eigenaar).
+# Silent on failure — endpoint may not exist on older dashboards, in which
+# case we accept possible duplicates rather than abort.
+PLAN_JSON="$PLAN_JSON" URL="$DASHBOARD_URL" KEY="$API_KEY" USER_NAME="$BRIDGE_USER" python3 <<'PY'
+import json, os, subprocess, sys
+
+with open(os.environ["PLAN_JSON"]) as f:
+    plan = json.load(f)
+
+datum = plan.get("datum")
+if not datum:
+    sys.exit(0)  # no datum, skip reset
+
+url = os.environ["URL"].rstrip("/")
+key = os.environ["KEY"]
+eigenaar = os.environ["USER_NAME"]
+
+r = subprocess.run(
+    [
+        "curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
+        "-X", "POST", f"{url}/api/agenda/bridge-reset",
+        "-H", f"Authorization: Bearer {key}",
+        "-H", "Content-Type: application/json",
+        "-d", json.dumps({"datum": datum, "eigenaar": eigenaar}),
+    ],
+    capture_output=True, text=True,
+)
+code = (r.stdout or "?").strip()
+if code.startswith("2"):
+    print(f"bridge-reset: {datum} eigenaar={eigenaar} OK", file=sys.stderr)
+else:
+    print(f"bridge-reset: {code} (skipping, will tolerate dups)", file=sys.stderr)
+PY
+
+# Step 2: post each non-buffer block to /api/agenda with eigenaar + gemaaktDoor.
+PLAN_JSON="$PLAN_JSON" URL="$DASHBOARD_URL" KEY="$API_KEY" USER_NAME="$BRIDGE_USER" python3 <<'PY'
 import json, os, subprocess, sys
 
 with open(os.environ["PLAN_JSON"]) as f:
@@ -76,9 +114,12 @@ if not isinstance(plan, dict):
 
 url = os.environ["URL"].rstrip("/")
 key = os.environ["KEY"]
+default_user = os.environ["USER_NAME"]
 datum = plan.get("datum")
 if not datum:
     sys.exit("plan JSON mist 'datum' veld")
+
+valid_eigenaar = {"sem", "syb", "team", "vrij"}
 
 ok, fail = 0, 0
 for b in plan.get("blokken", []) or []:
@@ -93,15 +134,22 @@ for b in plan.get("blokken", []) or []:
         continue
     start_iso = f"{datum}T{start}:00"
     eind_iso = f"{datum}T{eind}:00"
+
+    eigenaar = b.get("eigenaar") or default_user
+    if eigenaar not in valid_eigenaar:
+        # Claude can slip up — coerce to 'vrij' rather than failing the block.
+        print(f"warn: ongeldige eigenaar '{eigenaar}' voor '{titel}', val terug op 'vrij'", file=sys.stderr)
+        eigenaar = "vrij"
+
     body = {
         "titel": titel,
         "omschrijving": b.get("toelichting", ""),
         "startDatum": start_iso,
         "eindDatum": eind_iso,
-        "type": "taak" if b.get("type") == "taak" else "blok",
+        "type": "afspraak",
+        "eigenaar": eigenaar,
+        "gemaaktDoor": "bridge",
     }
-    if b.get("taakId"):
-        body["taakId"] = b["taakId"]
     r = subprocess.run(
         [
             "curl", "-s", "-w", "\nHTTP:%{http_code}",

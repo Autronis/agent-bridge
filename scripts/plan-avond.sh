@@ -125,8 +125,8 @@ case "$DRY_RUN" in
     log "DRY RUN: skip commit-planning"
     ;;
   *)
-    log "Commit blokken naar dashboard..."
-    bash "$PROJECT_DIR/scripts/commit-planning.sh" "$PLAN_FILE" 2>&1 | tee -a "$LOG"
+    log "Commit blokken naar dashboard (eigenaar=$USER_NAME)..."
+    BRIDGE_USER="$USER_NAME" bash "$PROJECT_DIR/scripts/commit-planning.sh" "$PLAN_FILE" 2>&1 | tee -a "$LOG"
     ;;
 esac
 

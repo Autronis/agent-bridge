@@ -21,6 +21,7 @@ Je ontvangt via stdin een JSON met:
 6. **Als een team-taak voor beiden open is**, suggereer wie 'm beter kan doen (gebruik cluster-expertise heuristic).
 7. **Max 6 uur productief gepland** per dag. Laat buffer.
 8. **Prioriteit**: deadline vandaag/morgen → hoog → normaal → laag. Overschrijdende deadlines altijd eerst.
+9. **Eigenaar altijd expliciet per blok**: gebruik `"{{USER_NAME}}"` voor je eigen werk, `"team"` voor meetings/intake-calls waar beide partners bij horen, `"vrij"` alleen voor werk dat nog niet gepakt is. De dashboard-agenda rendert sem/syb/team in aparte swim lanes, dus dit moet kloppen.
 
 ## Output format (JSON, ALLEEN JSON, geen markdown)
 
@@ -34,6 +35,7 @@ Je ontvangt via stdin een JSON met:
       "titel": "Korte titel",
       "taakId": 123,
       "type": "taak|cluster|meeting|buffer",
+      "eigenaar": "{{USER_NAME}}",
       "toelichting": "1 zin waarom"
     }
   ],
