@@ -71,9 +71,10 @@ SLIM_FILE="${TMP_BASE}-slim.json"
 AGENDA_FILE="${TMP_BASE}-agenda.json"
 UREN_FILE="${TMP_BASE}-uren.json"
 GTM_FILE="${TMP_BASE}-gtm.json"
+BRIDGE_CTX_FILE="${TMP_BASE}-bridge-ctx.json"
 
 cleanup() {
-  rm -f "$TAKEN_FILE" "$SLIM_FILE" "$AGENDA_FILE" "$UREN_FILE" "$GTM_FILE"
+  rm -f "$TAKEN_FILE" "$SLIM_FILE" "$AGENDA_FILE" "$UREN_FILE" "$GTM_FILE" "$BRIDGE_CTX_FILE"
 }
 trap cleanup EXIT
 
@@ -99,6 +100,7 @@ fetch_endpoint "$SLIM_FILE"   "/api/taken/slim"                                 
 fetch_endpoint "$AGENDA_FILE" "/api/agenda?van=${MORGEN}&tot=${MORGEN}"          "agenda_morgen"
 fetch_endpoint "$UREN_FILE"   "/api/briefing/uren-deze-week"                     "uren_week"
 fetch_endpoint "$GTM_FILE"    "/api/gtm-ritme"                                   "gtm_ritme"
+fetch_endpoint "$BRIDGE_CTX_FILE" "/api/bridge/context?user=${USER_NAME}"        "bridge_context"
 
 # Compose the final JSON. Alle inputs via env-vars (geen string injection).
 USER_NAME="$USER_NAME" \
@@ -108,6 +110,7 @@ SLIM_FILE="$SLIM_FILE" \
 AGENDA_FILE="$AGENDA_FILE" \
 UREN_FILE="$UREN_FILE" \
 GTM_FILE="$GTM_FILE" \
+BRIDGE_CTX_FILE="$BRIDGE_CTX_FILE" \
 python3 <<'PY'
 import json, os, sys
 
@@ -134,11 +137,12 @@ slim_doc   = load_json(os.environ["SLIM_FILE"],   "slimme_taken")
 agenda_doc = load_json(os.environ["AGENDA_FILE"], "agenda_morgen")
 uren_doc   = load_json(os.environ["UREN_FILE"],   "uren_week")
 gtm_doc    = load_json(os.environ["GTM_FILE"],    "gtm_ritme")
+bridge_ctx = load_json(os.environ["BRIDGE_CTX_FILE"], "bridge_context")
 
 # Warn on API-level error envelopes ({fout: "..."}).
 for label, doc in (("taken", taken_doc), ("slimme_taken", slim_doc),
                    ("agenda_morgen", agenda_doc), ("uren_week", uren_doc),
-                   ("gtm_ritme", gtm_doc)):
+                   ("gtm_ritme", gtm_doc), ("bridge_context", bridge_ctx)):
     if isinstance(doc, dict) and "fout" in doc:
         print(f"fetch-context: warn: {label} API returned fout: {doc.get('fout')}", file=sys.stderr)
 
@@ -158,6 +162,9 @@ out = {
     "agenda_morgen": agenda_list,
     "uren_week": uren_week,
     "gtm_ritme": gtm_list,
+    "leads_pipeline": bridge_ctx.get("leads_pipeline", []) if isinstance(bridge_ctx, dict) else [],
+    "klanten_actief": bridge_ctx.get("klanten_actief", []) if isinstance(bridge_ctx, dict) else [],
+    "projecten_lopend": bridge_ctx.get("projecten_lopend", []) if isinstance(bridge_ctx, dict) else [],
 }
 print(json.dumps(out, ensure_ascii=False))
 PY
