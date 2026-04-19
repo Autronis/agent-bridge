@@ -150,6 +150,8 @@ for b in plan.get("blokken", []) or []:
         "eigenaar": eigenaar,
         "gemaaktDoor": "bridge",
     }
+    if isinstance(b.get("projectId"), int):
+        body["projectId"] = b["projectId"]
     r = subprocess.run(
         [
             "curl", "-s", "-w", "\nHTTP:%{http_code}",

@@ -70,9 +70,10 @@ TAKEN_FILE="${TMP_BASE}-taken.json"
 SLIM_FILE="${TMP_BASE}-slim.json"
 AGENDA_FILE="${TMP_BASE}-agenda.json"
 UREN_FILE="${TMP_BASE}-uren.json"
+GTM_FILE="${TMP_BASE}-gtm.json"
 
 cleanup() {
-  rm -f "$TAKEN_FILE" "$SLIM_FILE" "$AGENDA_FILE" "$UREN_FILE"
+  rm -f "$TAKEN_FILE" "$SLIM_FILE" "$AGENDA_FILE" "$UREN_FILE" "$GTM_FILE"
 }
 trap cleanup EXIT
 
@@ -97,6 +98,7 @@ fetch_endpoint "$TAKEN_FILE"  "/api/taken?status=open,bezig"                    
 fetch_endpoint "$SLIM_FILE"   "/api/taken/slim"                                  "slimme_taken"
 fetch_endpoint "$AGENDA_FILE" "/api/agenda?van=${MORGEN}&tot=${MORGEN}"          "agenda_morgen"
 fetch_endpoint "$UREN_FILE"   "/api/briefing/uren-deze-week"                     "uren_week"
+fetch_endpoint "$GTM_FILE"    "/api/gtm-ritme"                                   "gtm_ritme"
 
 # Compose the final JSON. Alle inputs via env-vars (geen string injection).
 USER_NAME="$USER_NAME" \
@@ -105,6 +107,7 @@ TAKEN_FILE="$TAKEN_FILE" \
 SLIM_FILE="$SLIM_FILE" \
 AGENDA_FILE="$AGENDA_FILE" \
 UREN_FILE="$UREN_FILE" \
+GTM_FILE="$GTM_FILE" \
 python3 <<'PY'
 import json, os, sys
 
@@ -130,10 +133,12 @@ taken_doc  = load_json(os.environ["TAKEN_FILE"],  "taken")
 slim_doc   = load_json(os.environ["SLIM_FILE"],   "slimme_taken")
 agenda_doc = load_json(os.environ["AGENDA_FILE"], "agenda_morgen")
 uren_doc   = load_json(os.environ["UREN_FILE"],   "uren_week")
+gtm_doc    = load_json(os.environ["GTM_FILE"],    "gtm_ritme")
 
 # Warn on API-level error envelopes ({fout: "..."}).
 for label, doc in (("taken", taken_doc), ("slimme_taken", slim_doc),
-                   ("agenda_morgen", agenda_doc), ("uren_week", uren_doc)):
+                   ("agenda_morgen", agenda_doc), ("uren_week", uren_doc),
+                   ("gtm_ritme", gtm_doc)):
     if isinstance(doc, dict) and "fout" in doc:
         print(f"fetch-context: warn: {label} API returned fout: {doc.get('fout')}", file=sys.stderr)
 
@@ -141,6 +146,7 @@ taken_list   = pick_list(taken_doc,  ["taken"])
 # /api/taken/slim envelope is inconsistent across versions — probeer in volgorde.
 slim_list    = pick_list(slim_doc,   ["actief", "templates", "slimmeTaken", "data"])
 agenda_list  = pick_list(agenda_doc, ["items"])
+gtm_list     = pick_list(gtm_doc,    ["slots"])
 
 uren_week = uren_doc if isinstance(uren_doc, dict) and "fout" not in uren_doc else {}
 
@@ -151,6 +157,7 @@ out = {
     "slimme_taken": slim_list,
     "agenda_morgen": agenda_list,
     "uren_week": uren_week,
+    "gtm_ritme": gtm_list,
 }
 print(json.dumps(out, ensure_ascii=False))
 PY

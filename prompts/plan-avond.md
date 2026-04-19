@@ -9,6 +9,7 @@ Je ontvangt via stdin een JSON met:
 - `slimme_taken[]` — beschikbare slimme-taak templates (uit sidebar /taken)
 - `agenda_morgen[]` — wat er al gepland staat (meetings, vaste blokken)
 - `uren_week` — hoeveel uur er deze week al is gewerkt
+- `gtm_ritme[]` — vaste dagelijkse/wekelijkse slots (sales_engine batch, content, engagement window, inbound) die je moet respecteren als protected time
 - `partner_voorstel` — (mogelijk leeg) vorige planning-post van {{PARTNER_ROLE}} voor dezelfde dag
 
 ## Regels
@@ -23,6 +24,8 @@ Je ontvangt via stdin een JSON met:
 8. **Prioriteit**: deadline vandaag/morgen → hoog → normaal → laag. Overschrijdende deadlines altijd eerst.
 9. **Eigenaar altijd expliciet per blok**: gebruik `"{{USER_NAME}}"` voor je eigen werk, `"team"` voor meetings/intake-calls waar beide partners bij horen, `"vrij"` alleen voor werk dat nog niet gepakt is. De dashboard-agenda rendert sem/syb/team in aparte swim lanes, dus dit moet kloppen.
 10. **Slimme acties (`slimme_acties[]`)**: produceer 5–10 concrete uitvoerbare acties van 15–60 min per stuk — **geen generieke templates** zoals "1-op-1 koffie {branche}". Altijd specifiek: klantnaam, project-stap, outreach-batch met concrete target. Verdeel logisch over `voor: sem | syb | team`. Gebruik pijler uit GTM-plan (`sales_engine | content | inbound | netwerk | delivery | intern | admin`) en cluster uit CLAUDE.md (`backend-infra | frontend | klantcontact | content | admin | research`). Deze vullen de Slimme Acties sidebar op de agenda-pagina — kwaliteit hier = hoe bruikbaar Sem de volgende ochtend zijn dag kan starten.
+11. **GTM-ritme respecteren**: de context bevat `gtm_ritme[]` — vaste slots voor `sales_engine`, `content`, `netwerk` (engagement window) en `inbound`. Plan klant-werk OMHEEN deze slots, niet EROVER. Vul de slots zelf met relevante slimme acties of blokken die bij de pijler horen — bv. Sales Engine slot 09:00–10:30 = een cold outreach batch blok. Check per slot of `gebruiker` overeenkomt met `{{USER_NAME}}`, `team`, of de partner; negeer slots van de partner.
+12. **Project koppeling**: als een taak een `projectId` heeft, neem die over in het blok als `projectId` zodat de agenda-UI de klant-kleur rendert.
 
 ## Output format (JSON, ALLEEN JSON, geen markdown)
 
@@ -37,6 +40,7 @@ Je ontvangt via stdin een JSON met:
       "taakId": 123,
       "type": "taak|cluster|meeting|buffer",
       "eigenaar": "{{USER_NAME}}",
+      "projectId": 123,
       "toelichting": "1 zin waarom"
     }
   ],
