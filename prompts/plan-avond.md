@@ -22,6 +22,7 @@ Je ontvangt via stdin een JSON met:
 7. **Max 6 uur productief gepland** per dag. Laat buffer.
 8. **Prioriteit**: deadline vandaag/morgen → hoog → normaal → laag. Overschrijdende deadlines altijd eerst.
 9. **Eigenaar altijd expliciet per blok**: gebruik `"{{USER_NAME}}"` voor je eigen werk, `"team"` voor meetings/intake-calls waar beide partners bij horen, `"vrij"` alleen voor werk dat nog niet gepakt is. De dashboard-agenda rendert sem/syb/team in aparte swim lanes, dus dit moet kloppen.
+10. **Slimme acties (`slimme_acties[]`)**: produceer 5–10 concrete uitvoerbare acties van 15–60 min per stuk — **geen generieke templates** zoals "1-op-1 koffie {branche}". Altijd specifiek: klantnaam, project-stap, outreach-batch met concrete target. Verdeel logisch over `voor: sem | syb | team`. Gebruik pijler uit GTM-plan (`sales_engine | content | inbound | netwerk | delivery | intern | admin`) en cluster uit CLAUDE.md (`backend-infra | frontend | klantcontact | content | admin | research`). Deze vullen de Slimme Acties sidebar op de agenda-pagina — kwaliteit hier = hoe bruikbaar Sem de volgende ochtend zijn dag kan starten.
 
 ## Output format (JSON, ALLEEN JSON, geen markdown)
 
@@ -41,6 +42,17 @@ Je ontvangt via stdin een JSON met:
   ],
   "team_taken_voorstel": [
     { "taakId": 456, "titel": "...", "wie": "{{USER_NAME}}", "reden": "cluster=backend-infra past" }
+  ],
+  "slimme_acties": [
+    {
+      "titel": "Cold outreach batch — 10 webshops Zutphen",
+      "beschrijving": "10 e-commerce prospects uit Zutphen op Shopify/Magento, via Sales Engine scannen + DM sturen",
+      "cluster": "klantcontact",
+      "pijler": "sales_engine",
+      "duurMin": 45,
+      "voor": "{{USER_NAME}}",
+      "prioriteit": "normaal"
+    }
   ],
   "conflicts": [],
   "samenvatting": "2 zinnen: wat is het karakter van de dag, waar zit de focus"

@@ -173,3 +173,74 @@ for b in plan.get("blokken", []) or []:
 
 print(f"{ok} blokken gepland, {fail} mislukt")
 PY
+
+# Step 3: POST slimme_acties[] naar /api/slimme-acties-bridge.
+# Vervangt de generieke slimme-taken-templates door concrete,
+# Autronis-specifieke acties die Atlas/Autro vannacht gegenereerd heeft.
+PLAN_JSON="$PLAN_JSON" URL="$DASHBOARD_URL" KEY="$API_KEY" python3 <<'PY'
+import json, os, subprocess, sys
+from datetime import datetime, timedelta, timezone
+
+with open(os.environ["PLAN_JSON"]) as f:
+    plan = json.load(f)
+
+acties = plan.get("slimme_acties") or []
+if not acties:
+    sys.exit(0)
+
+# verlooptOp = start_of_tomorrow + 48h (acties zijn voor morgen; twee dagen
+# geldigheid geeft Sem tijd om ze op te pakken ook als hij ze niet meteen
+# ziet).
+now = datetime.now(timezone.utc)
+tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+verloopt = (tomorrow + timedelta(hours=48)).isoformat().replace("+00:00", "Z")
+
+valid_voor = {"sem", "syb", "team"}
+valid_prior = {"laag", "normaal", "hoog"}
+
+payload = []
+for a in acties:
+    if not isinstance(a, dict) or not a.get("titel"):
+        continue
+    voor = a.get("voor") or "team"
+    if voor not in valid_voor:
+        voor = "team"
+    prio = a.get("prioriteit") or "normaal"
+    if prio not in valid_prior:
+        prio = "normaal"
+    payload.append({
+        "titel": a["titel"],
+        "beschrijving": a.get("beschrijving") or None,
+        "cluster": a.get("cluster") or None,
+        "pijler": a.get("pijler") or None,
+        "duurMin": a.get("duurMin"),
+        "voor": voor,
+        "prioriteit": prio,
+        "bronTaakId": a.get("bronTaakId"),
+        "verlooptOp": verloopt,
+    })
+
+if not payload:
+    sys.exit(0)
+
+url = os.environ["URL"].rstrip("/")
+key = os.environ["KEY"]
+r = subprocess.run(
+    [
+        "curl", "-s", "-w", "\nHTTP:%{http_code}",
+        "-X", "POST", f"{url}/api/slimme-acties-bridge",
+        "-H", f"Authorization: Bearer {key}",
+        "-H", "Content-Type: application/json",
+        "-d", json.dumps({"acties": payload}),
+    ],
+    capture_output=True, text=True,
+)
+body_out = r.stdout or ""
+parts = body_out.rsplit("HTTP:", 1)
+code = parts[1].strip() if len(parts) > 1 else "?"
+if code.startswith("2"):
+    print(f"slimme-acties: {len(payload)} gepost", file=sys.stderr)
+else:
+    snippet = (parts[0] or "")[:180].replace("\n", " ")
+    print(f"slimme-acties FAIL ({code}): {snippet}", file=sys.stderr)
+PY
