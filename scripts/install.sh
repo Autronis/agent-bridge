@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# install.sh — cross-platform installer.
+#  * macOS  → launchd (StartCalendarInterval) via .plist template
+#  * Windows (git-bash / MSYS / Cygwin) → delegates to install-windows.ps1
+#    (Windows Task Scheduler via PowerShell)
+#  * Linux  → not yet supported (cron wrapper welkom als PR)
 set -euo pipefail
 
 PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
@@ -8,6 +13,47 @@ if [[ ! -f "$CONFIG_PATH" ]]; then
   echo "Config niet gevonden. Kopieer config/settings.example.json naar $CONFIG_PATH en pas aan."
   exit 1
 fi
+
+case "${OSTYPE:-}" in
+  msys*|cygwin*|mingw*)
+    echo "Windows gedetecteerd ($OSTYPE) — delegeren naar install-windows.ps1"
+    # Try powershell.exe first (Windows PowerShell 5.x, altijd aanwezig),
+    # fallback naar pwsh (PowerShell 7+ cross-platform).
+    PS_BIN=""
+    if command -v powershell.exe >/dev/null 2>&1; then
+      PS_BIN="powershell.exe"
+    elif command -v pwsh >/dev/null 2>&1; then
+      PS_BIN="pwsh"
+    else
+      echo "install: kan powershell.exe noch pwsh vinden in PATH" >&2
+      exit 1
+    fi
+    # Convert POSIX path to Windows path for PowerShell arg.
+    WIN_SCRIPT="$PROJECT_DIR/scripts/install-windows.ps1"
+    if command -v cygpath >/dev/null 2>&1; then
+      WIN_SCRIPT=$(cygpath -w "$WIN_SCRIPT")
+    fi
+    exec "$PS_BIN" -NoProfile -ExecutionPolicy Bypass -File "$WIN_SCRIPT"
+    ;;
+  linux*)
+    echo "Linux nog niet ondersteund (cron wrapper welkom als PR)"
+    exit 1
+    ;;
+  darwin*|"")
+    # macOS path — gaat door naar launchd hieronder.
+    # (OSTYPE kan leeg zijn in sommige shells; behandel als darwin als platform bash 'darwin' terug geeft.)
+    if [[ "${OSTYPE:-}" == "" ]] && [[ "$(uname -s)" != "Darwin" ]]; then
+      echo "install: onbekende OS (uname=$(uname -s)); alleen macOS/Windows ondersteund"
+      exit 1
+    fi
+    ;;
+  *)
+    echo "install: onbekende OS: $OSTYPE; alleen macOS/Windows ondersteund"
+    exit 1
+    ;;
+esac
+
+# -------- macOS / launchd installation --------
 
 read_cfg() {
   CONFIG_PATH="$CONFIG_PATH" python3 -c '

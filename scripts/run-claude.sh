@@ -49,7 +49,11 @@ if [[ ! -x "$CLAUDE_BIN" ]]; then
 fi
 
 NOW=$(date '+%Y-%m-%d %H:%M')
-TOMORROW=$(date -v+1d +%Y-%m-%d)
+if date -v+1d +%Y-%m-%d >/dev/null 2>&1; then
+  TOMORROW=$(date -v+1d +%Y-%m-%d)   # BSD / macOS
+else
+  TOMORROW=$(date -d "tomorrow" +%Y-%m-%d)   # GNU / Linux / git-bash / MSYS
+fi
 
 case "$USER_NAME" in
   sem) FRIENDLY="Sem" ;;

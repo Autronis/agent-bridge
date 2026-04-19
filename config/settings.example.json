@@ -1,4 +1,6 @@
 {
+  "_doc_claude_binary": "macOS: /opt/homebrew/bin/claude  |  Windows (git-bash): output van `which claude.exe`, bv. /c/Users/<user>/AppData/Roaming/npm/claude.cmd of /c/Users/<user>/AppData/Local/Programs/claude/claude.exe",
+  "_doc_discord_bot_script": "macOS: ~/.claude/scripts/discord-bot.sh  |  Windows: idem als git-bash die pad herkent, anders full path naar de .sh",
   "user": "sem",
   "role_name": "Atlas",
   "partner_role_name": "Autro",

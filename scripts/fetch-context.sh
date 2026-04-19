@@ -57,8 +57,12 @@ if [[ -z "$API_KEY" ]]; then
   exit 1
 fi
 
-# Morgen datum (macOS BSD date).
-MORGEN=$(date -v+1d +%Y-%m-%d)
+# Morgen datum — werkt op macOS (BSD date) én git-bash/Linux (GNU date).
+if date -v+1d +%Y-%m-%d >/dev/null 2>&1; then
+  MORGEN=$(date -v+1d +%Y-%m-%d)   # BSD / macOS
+else
+  MORGEN=$(date -d "tomorrow" +%Y-%m-%d)   # GNU / Linux / git-bash / MSYS
+fi
 
 # Temp files voor responses. Gebruik PID + random zodat parallel-runs niet botsen.
 TMP_BASE="${TMPDIR:-/tmp}/agent-bridge-$$-$RANDOM"

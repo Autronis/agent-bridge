@@ -66,7 +66,11 @@ log "Start plan-avond voor user=$USER_NAME (dry_run=$DRY_RUN)"
 # Autro (syb) leest Atlas' voorstel eerst — Autro draait 15 min later.
 PARTNER_VOORSTEL=""
 if [[ "$USER_NAME" == "syb" ]]; then
-  TOMORROW=$(date -v+1d +%Y-%m-%d)
+  if date -v+1d +%Y-%m-%d >/dev/null 2>&1; then
+    TOMORROW=$(date -v+1d +%Y-%m-%d)   # BSD / macOS
+  else
+    TOMORROW=$(date -d "tomorrow" +%Y-%m-%d)   # GNU / Linux / git-bash / MSYS
+  fi
   log "Autro: lees laatste Atlas planning-post voor $TOMORROW..."
   MSGS=$("$DISCORD_BOT" read 20 2>/dev/null || echo "")
   # Extract Atlas' block: zoek marker "PLANNING-SEM Atlas voor <datum>",
