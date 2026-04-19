@@ -152,6 +152,10 @@ for b in plan.get("blokken", []) or []:
     }
     if isinstance(b.get("projectId"), int):
         body["projectId"] = b["projectId"]
+    if isinstance(b.get("taakId"), int):
+        body["taakId"] = b["taakId"]
+    if isinstance(b.get("pijler"), str) and b["pijler"].strip():
+        body["pijler"] = b["pijler"].strip()
     r = subprocess.run(
         [
             "curl", "-s", "-w", "\nHTTP:%{http_code}",
