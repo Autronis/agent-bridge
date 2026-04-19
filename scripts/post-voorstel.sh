@@ -39,6 +39,7 @@ else:
 DISCORD_BOT_RAW=$(read_cfg discord_bot_script)
 ROLE=$(read_cfg role_name)
 USER_NAME=$(read_cfg user)
+CHANNEL=$(read_cfg planning_channel)
 
 # Expand ~ in discord bot script path.
 DISCORD_BOT="${DISCORD_BOT_RAW/#\~/$HOME}"
@@ -103,4 +104,4 @@ sys.stdout.write("\n".join(lines))
 PY
 )
 
-"$DISCORD_BOT" send "$MESSAGE"
+"$DISCORD_BOT" post "$CHANNEL" "$MESSAGE"
