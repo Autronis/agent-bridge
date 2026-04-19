@@ -104,9 +104,21 @@ print(json.dumps(c, ensure_ascii=False))
 fi
 
 # Run Claude headless. --output-format text = platte response body op stdout.
+# < /dev/null: sluit stdin expliciet zodat claude CLI niet wacht op piped input
+# en geen "Warning: no stdin data received in 3s" op stdout plaatst (die daarna
+# de JSON-parser breekt). Stderr naar een tmp-file zodat echte errors leesbaar
+# blijven bij een lege RESPONSE.
+CLAUDE_STDERR=$(mktemp)
 RESPONSE=$("$CLAUDE_BIN" -p "$CONTEXT" \
   --append-system-prompt "$SYSTEM_PROMPT" \
-  --output-format text 2>&1)
+  --output-format text </dev/null 2>"$CLAUDE_STDERR")
+if [[ -z "$RESPONSE" ]]; then
+  echo "run-claude: lege response van claude CLI. stderr:" >&2
+  cat "$CLAUDE_STDERR" >&2
+  rm -f "$CLAUDE_STDERR"
+  exit 1
+fi
+rm -f "$CLAUDE_STDERR"
 
 # Validate JSON. Strip per-ongeluk toegevoegde ```json fences.
 RESPONSE_OUT="$RESPONSE" python3 -c '
