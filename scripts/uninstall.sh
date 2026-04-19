@@ -26,7 +26,13 @@ case "${OSTYPE:-}" in
     ;;
 esac
 
-# macOS path
-PLIST="$HOME/Library/LaunchAgents/com.autronis.plan-avond.plist"
-[[ -f "$PLIST" ]] && launchctl unload "$PLIST" && rm "$PLIST"
-echo "Uninstalled."
+# macOS path — remove both plists if present.
+for LABEL in com.autronis.plan-avond com.autronis.weekrapport; do
+  PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
+  if [[ -f "$PLIST" ]]; then
+    launchctl unload "$PLIST" 2>/dev/null || true
+    rm "$PLIST"
+    echo "Uninstalled $LABEL."
+  fi
+done
+echo "Klaar. Check: launchctl list | grep autronis  (mag leeg zijn)"

@@ -12,7 +12,8 @@
 #   bash scripts/install.sh   (detecteert Windows en delegeert hierheen)
 
 param(
-    [string]$TaskName = "AutronisPlanAvond"
+    [string]$TaskName        = "AutronisPlanAvond",
+    [string]$WeekTaskName    = "AutronisWeekrapport"
 )
 
 $ErrorActionPreference = "Stop"
@@ -76,8 +77,15 @@ if (-not (Test-Path $PlanScriptWin)) {
     exit 1
 }
 
+$WeekScriptWin = Join-Path $ProjectDir "scripts\weekrapport.sh"
+if (-not (Test-Path $WeekScriptWin)) {
+    Write-Error "Fout: weekrapport.sh niet gevonden: $WeekScriptWin"
+    exit 1
+}
+
 # bash.exe wil forward-slashes of zonder-drive. Converteer backslashes.
 $PlanScriptBash = $PlanScriptWin -replace '\\', '/'
+$WeekScriptBash = $WeekScriptWin -replace '\\', '/'
 
 # Ensure logs dir bestaat (plan-avond.sh doet dit ook, maar veilig om nu vast te maken).
 $LogsDir = Join-Path $ProjectDir "logs"
@@ -85,19 +93,7 @@ if (-not (Test-Path $LogsDir)) {
     New-Item -ItemType Directory -Path $LogsDir | Out-Null
 }
 
-# -------- Build scheduled task --------
-# Gebruik login-shell (-l) zodat ~/.bashrc en PATH additions (python3, curl, claude.exe) geladen worden.
-# Task Scheduler geeft de -Argument string door aan bash.exe met Windows-argument-parsing.
-# Dubbele quotes beschermen het script-pad als het spaties bevat.
-$BashCmd = '-l -c "' + $PlanScriptBash + '"'
-
-$Action = New-ScheduledTaskAction `
-    -Execute $BashPath `
-    -Argument $BashCmd `
-    -WorkingDirectory $ProjectDir
-
-$Trigger = New-ScheduledTaskTrigger -Daily -At $Time
-
+# -------- Shared settings/principal --------
 # Draai alleen bij ingelogde interactieve sessie — komt overeen met macOS
 # LimitLoadToSessionType=Aqua. Geen wachtwoord nodig, gebruiker doet het zelf.
 $TaskUser = "{0}\{1}" -f $env:USERDOMAIN, $env:USERNAME
@@ -112,7 +108,19 @@ $Settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
     -ExecutionTimeLimit (New-TimeSpan -Hours 1)
 
-# -------- Register (overschrijft bestaande taak met dezelfde naam) --------
+# -------- Build plan-avond task --------
+# Gebruik login-shell (-l) zodat ~/.bashrc en PATH additions (python3, curl, claude.exe) geladen worden.
+# Task Scheduler geeft de -Argument string door aan bash.exe met Windows-argument-parsing.
+# Dubbele quotes beschermen het script-pad als het spaties bevat.
+$PlanBashCmd = '-l -c "' + $PlanScriptBash + '"'
+
+$PlanAction = New-ScheduledTaskAction `
+    -Execute $BashPath `
+    -Argument $PlanBashCmd `
+    -WorkingDirectory $ProjectDir
+
+$PlanTrigger = New-ScheduledTaskTrigger -Daily -At $Time
+
 $existing = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 if ($existing) {
     Write-Host "Bestaande taak '$TaskName' gevonden — wordt overschreven..."
@@ -121,21 +129,49 @@ if ($existing) {
 
 Register-ScheduledTask `
     -TaskName $TaskName `
-    -Action $Action `
-    -Trigger $Trigger `
+    -Action $PlanAction `
+    -Trigger $PlanTrigger `
     -Principal $Principal `
     -Settings $Settings `
     -Description "Autronis Agent Bridge — dagelijks avondplan (Atlas/Autro)" | Out-Null
 
+# -------- Build weekrapport task (zondag 19:00) --------
+$WeekBashCmd = '-l -c "' + $WeekScriptBash + '"'
+
+$WeekAction = New-ScheduledTaskAction `
+    -Execute $BashPath `
+    -Argument $WeekBashCmd `
+    -WorkingDirectory $ProjectDir
+
+# Wekelijks, elke zondag om 19:00.
+$WeekTrigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At "19:00"
+
+$existingWeek = Get-ScheduledTask -TaskName $WeekTaskName -ErrorAction SilentlyContinue
+if ($existingWeek) {
+    Write-Host "Bestaande taak '$WeekTaskName' gevonden — wordt overschreven..."
+    Unregister-ScheduledTask -TaskName $WeekTaskName -Confirm:$false
+}
+
+Register-ScheduledTask `
+    -TaskName $WeekTaskName `
+    -Action $WeekAction `
+    -Trigger $WeekTrigger `
+    -Principal $Principal `
+    -Settings $Settings `
+    -Description "Autronis Agent Bridge — wekelijks screen-time rapport (zondag 19:00)" | Out-Null
+
 Write-Host ""
-Write-Host "[OK] Taak '$TaskName' geregistreerd voor user=$UserName om $Time."
-Write-Host "     Commando: $BashPath $BashCmd"
+Write-Host "[OK] Taken geregistreerd voor user=$UserName:"
+Write-Host "     - $TaskName (plan-avond, dagelijks om $Time)"
+Write-Host "     - $WeekTaskName (weekrapport, zondag 19:00)"
 Write-Host ""
 Write-Host "Verifieer:"
-Write-Host "  Get-ScheduledTask -TaskName $TaskName"
+Write-Host "  Get-ScheduledTask -TaskName $TaskName, $WeekTaskName"
 Write-Host ""
 Write-Host "Handmatig direct uitvoeren (test):"
 Write-Host "  Start-ScheduledTask -TaskName $TaskName"
+Write-Host "  Start-ScheduledTask -TaskName $WeekTaskName"
 Write-Host ""
 Write-Host "Log na run (in bash):"
 Write-Host "  tail -100 $($LogsDir -replace '\\', '/')/plan-avond_*.log"
+Write-Host "  tail -100 $($LogsDir -replace '\\', '/')/weekrapport_*.log"

@@ -1,16 +1,19 @@
 # uninstall-windows.ps1
-# Verwijdert de AutronisPlanAvond Scheduled Task.
+# Verwijdert de AutronisPlanAvond en AutronisWeekrapport Scheduled Tasks.
 
 param(
-    [string]$TaskName = "AutronisPlanAvond"
+    [string]$TaskName     = "AutronisPlanAvond",
+    [string]$WeekTaskName = "AutronisWeekrapport"
 )
 
 $ErrorActionPreference = "Stop"
 
-$existing = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
-if ($existing) {
-    Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
-    Write-Host "[OK] Taak '$TaskName' verwijderd."
-} else {
-    Write-Host "Geen taak met naam '$TaskName' gevonden — niets te doen."
+foreach ($name in @($TaskName, $WeekTaskName)) {
+    $existing = Get-ScheduledTask -TaskName $name -ErrorAction SilentlyContinue
+    if ($existing) {
+        Unregister-ScheduledTask -TaskName $name -Confirm:$false
+        Write-Host "[OK] Taak '$name' verwijderd."
+    } else {
+        Write-Host "Geen taak met naam '$name' gevonden — niets te doen."
+    }
 }

@@ -37,8 +37,8 @@ bash scripts/install.sh
 # → Installed for user=<sem|syb> at <time>.
 
 # 6. Verifiëren
-launchctl list | grep plan-avond
-# → een regel met com.autronis.plan-avond, exit 0
+launchctl list | grep autronis
+# → twee regels: com.autronis.plan-avond + com.autronis.weekrapport, exit 0
 ```
 
 ## Installatie (Windows 11 — Autro / Syb)
@@ -99,6 +99,10 @@ bash tests/test-dry-run.sh
 # Echte run nu (forceert launchd cron moment)
 launchctl kickstart -k gui/$(id -u)/com.autronis.plan-avond
 tail -100 logs/plan-avond.log
+
+# Weekrapport handmatig triggeren:
+launchctl kickstart -k gui/$(id -u)/com.autronis.weekrapport
+tail -100 logs/weekrapport.log
 ```
 
 ## Hoe werkt het
@@ -115,11 +119,29 @@ tail -100 logs/plan-avond.log
   (alles idem, met partner_voorstel meegegeven aan claude)
 ```
 
+### Wekelijks rapport
+
+```
+Zondag 19:00 — Atlas (sem's Mac) + Autro (syb's Mac):
+  weekrapport.sh
+    ├─ bereken maandag van de lopende week (vandaag − weekday)
+    ├─ POST /api/screen-time/samenvatting/periode {datum, type:"week"}
+    │   → dashboard genereert AI-samenvatting via Claude + persisteert
+    │     in screen_time_samenvattingen
+    └─ Discord post naar #weekrapport-sem / #weekrapport-syb
+       (splitst automatisch in chunks als >1900 chars)
+```
+
+Cached rapport is zichtbaar op `/tijd` (week view) in het dashboard.
+Herhaalde calls op dezelfde week overschrijven de bestaande samenvatting
+(upsert op gebruiker+datum+type).
+
 ## Bestanden
 
 | Script | Functie |
 |---|---|
 | `scripts/plan-avond.sh` | Main orchestrator — door launchd / Task Scheduler aangeroepen |
+| `scripts/weekrapport.sh` | Wekelijkse AI screen-time samenvatting — zondag 19:00 → Discord |
 | `scripts/fetch-context.sh` | Haalt dashboard data op |
 | `scripts/run-claude.sh` | Wrapper om `claude -p` met system prompt templating |
 | `scripts/post-voorstel.sh` | Formatteert + post naar Discord |
@@ -128,6 +150,7 @@ tail -100 logs/plan-avond.log
 | `scripts/install-windows.ps1` / `uninstall-windows.ps1` | Windows Task Scheduler registratie via PowerShell |
 | `prompts/plan-avond.md` | System prompt voor Claude |
 | `launchd/com.autronis.plan-avond.plist.template` | macOS plist template (placeholders voor user + tijd) |
+| `launchd/com.autronis.weekrapport.plist.template` | macOS plist template voor weekrapport (zondag 19:00) |
 
 ## Troubleshooting
 

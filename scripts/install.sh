@@ -76,13 +76,24 @@ HOUR=$(echo "$TIME" | cut -d: -f1)
 MIN=$(echo "$TIME" | cut -d: -f2)
 
 mkdir -p "$PROJECT_DIR/logs"
-PLIST_OUT="$HOME/Library/LaunchAgents/com.autronis.plan-avond.plist"
 
+# ---- plan-avond plist ----
+PLAN_PLIST_OUT="$HOME/Library/LaunchAgents/com.autronis.plan-avond.plist"
 sed -e "s|__PROJECT_DIR__|$PROJECT_DIR|g" \
     -e "s|__HOUR__|$HOUR|g" \
     -e "s|__MINUTE__|$MIN|g" \
-    "$PROJECT_DIR/launchd/com.autronis.plan-avond.plist.template" > "$PLIST_OUT"
+    "$PROJECT_DIR/launchd/com.autronis.plan-avond.plist.template" > "$PLAN_PLIST_OUT"
 
-launchctl unload "$PLIST_OUT" 2>/dev/null || true
-launchctl load -w "$PLIST_OUT"
-echo "Installed for user=$USER_NAME at $TIME. Check: launchctl list | grep plan-avond"
+launchctl unload "$PLAN_PLIST_OUT" 2>/dev/null || true
+launchctl load -w "$PLAN_PLIST_OUT"
+
+# ---- weekrapport plist (zondag 19:00, Weekday=0 in launchd) ----
+WEEK_PLIST_OUT="$HOME/Library/LaunchAgents/com.autronis.weekrapport.plist"
+sed -e "s|__PROJECT_DIR__|$PROJECT_DIR|g" \
+    "$PROJECT_DIR/launchd/com.autronis.weekrapport.plist.template" > "$WEEK_PLIST_OUT"
+
+launchctl unload "$WEEK_PLIST_OUT" 2>/dev/null || true
+launchctl load -w "$WEEK_PLIST_OUT"
+
+echo "Installed for user=$USER_NAME: plan-avond at $TIME + weekrapport zondag 19:00"
+echo "Check: launchctl list | grep autronis"
