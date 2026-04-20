@@ -101,6 +101,15 @@ Je ontvangt via stdin een JSON met:
     - `cluster`: één van backend-infra / frontend / klantcontact / content / admin / research
     - Single-object format (zonder array) wordt nog ondersteund maar is deprecated — array altijd gebruiken.
 
+## Overleg-input voor partner (bridge Plan 5)
+
+Jouw plan wordt vóór commit naar Discord gestuurd zodat {{PARTNER_ROLE}} het kan reviewen en reageren. Je plan JSON krijgt een `overleg` sectie die die review scherp maakt. Autro ziet de samenvatting + vragen en reply't met bevestigen/bijsturen; daarna heb jij de kans je plan te reviseren vóór commit.
+
+De `overleg` sectie moet concreet en kort zijn (Autro leest alleen die sectie, niet het hele plan):
+- `beknopt_voorstel` — 3-4 zinnen over de dag (karakter, focus, grote risico's)
+- `team_taken` — team/shared werk waar je onzeker bent over wie (bv. "Plan 4 Task 5 zit in backend-infra cluster; voorkeur Syb?")
+- `vragen_aan_partner` — concreet kortere vragen: "Heb je Ambari al gereviewed?", "Zijn jullie nog met Plan 4 bezig of kunnen we Plan 5 starten?", "Is Teamjobby scan goed?"
+
 ## Output format (JSON, ALLEEN JSON, geen markdown)
 
 ```json
@@ -145,7 +154,17 @@ Je ontvangt via stdin een JSON met:
     }
   ],
   "conflicts": [],
-  "samenvatting": "2 zinnen: wat is het karakter van de dag, waar zit de focus"
+  "samenvatting": "2 zinnen: wat is het karakter van de dag, waar zit de focus",
+  "overleg": {
+    "beknopt_voorstel": "3-4 zinnen over de dag: karakter, focus, grote risico's. Autro ziet dit als eerste.",
+    "team_taken": [
+      { "titel": "Plan 4 Task 5 — /api/gtm-ritme", "taakId": 148290, "voorkeur": "sem|syb", "reden": "cluster backend-infra, Syb actief op auth-middleware" }
+    ],
+    "vragen_aan_partner": [
+      "Concreet kort",
+      "Altijd ja/nee beantwoordbaar"
+    ]
+  }
 }
 ```
 

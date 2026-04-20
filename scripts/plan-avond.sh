@@ -115,8 +115,41 @@ fi
 printf '%s\n' "$PLAN" > "$PLAN_FILE"
 log "Plan geschreven naar $PLAN_FILE"
 
-# Post naar Discord.
-log "Post voorstel naar Discord..."
+# Bridge Plan 5 — overleg fase.
+# 1. Post bridge-voorstel met `overleg` inhoud naar Discord
+# 2. Wait max 10 min op BRIDGE-REPLY-<USER_UPPER> van partner
+# 3. Zo ja → revise plan met reply als feedback
+# Zo nee (timeout) → val terug op origineel plan
+ENABLE_OVERLEG="${ENABLE_BRIDGE_OVERLEG:-1}"
+if [[ "$ENABLE_OVERLEG" == "1" ]]; then
+  log "Post bridge-voorstel naar Discord voor $USER_NAME ↔ partner overleg..."
+  bash "$PROJECT_DIR/scripts/post-bridge-voorstel.sh" "$PLAN_FILE" 2>&1 | tee -a "$LOG" || log "post-bridge-voorstel faalde (tolerable)"
+
+  WAIT_SECONDS="${BRIDGE_OVERLEG_WAIT_SECONDS:-600}"
+  log "Wacht max ${WAIT_SECONDS}s op partner-reply..."
+  PARTNER_REPLY=$(bash "$PROJECT_DIR/scripts/wait-voor-reply.sh" "$WAIT_SECONDS" 2>>"$LOG" || echo "")
+
+  if [[ -n "$PARTNER_REPLY" ]]; then
+    log "Partner reply ontvangen ($(printf '%s' "$PARTNER_REPLY" | wc -c | tr -d ' ') chars) — reviseer plan..."
+    REVISED_PLAN_FILE="$LOG_DIR/plan_${TIMESTAMP}_revised.json"
+    set +e
+    REVISED=$(bash "$PROJECT_DIR/scripts/revise-plan.sh" "$PLAN_FILE" "$PARTNER_REPLY" 2>>"$LOG")
+    RRC=$?
+    set -e
+    if [[ $RRC -eq 0 && -n "$REVISED" ]]; then
+      printf '%s\n' "$REVISED" > "$REVISED_PLAN_FILE"
+      PLAN_FILE="$REVISED_PLAN_FILE"
+      log "Plan gereviseerd → $REVISED_PLAN_FILE"
+    else
+      log "Revise faalde (rc=$RRC) — val terug op origineel plan"
+    fi
+  else
+    log "Geen partner-reply (timeout) — commit origineel plan"
+  fi
+fi
+
+# Post finale (geredigeerde) plan naar Discord.
+log "Post finale voorstel naar Discord..."
 bash "$PROJECT_DIR/scripts/post-voorstel.sh" "$PLAN_FILE" 2>&1 | tee -a "$LOG"
 
 # Commit naar dashboard (tenzij dry-run).
