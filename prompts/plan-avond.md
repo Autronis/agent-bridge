@@ -43,9 +43,18 @@ Je ontvangt via stdin een JSON met:
     - `aiContext`: 1-3 zinnen vrije tekst met relevante achtergrond die Sem morgen snel moet weten zonder terug naar het dashboard te zoeken (bv. "Ambari zit in contact-fase sinds 15 april, laatste e-mail 3 dagen terug, scan-score was 8/10 op automatiseringspotentieel — hang het voorstel op aan hun orderproces-knelpunt"). Bij lead-pitches: noem status + waarde + laatste interactie. Bij dev-taken: noem het concrete knelpunt en de verwachte valkuil. **Geen context-dump; alleen wat niet af te leiden is uit de titel**.
     Meetings/lunch/GTM-slots zonder concrete uitvoer-stappen mogen deze velden weglaten.
 
-14. **Sales Engine is een BESTAAND TOOL** in het dashboard. Bij Sales Engine batch-blokken NIET stappen bedenken als "Google Maps scraper runnen" of "Sales Engine dashboard openen" — dat is alsof je een bestuurder leert gas geven. Houd stappen strikt: (a) batch starten via UI, (b) wachten op output (laat de tijd lopen = PARALLEL met andere taak), (c) top-results reviewen, (d) DM'en. Voor pitches van échte leads uit `leads_pipeline[]`: stappenplan focust op voorstel-draft + verzenden, niet op "scan openen" (scan is al gebeurd als lead in pipeline staat).
+14. **Sales Engine is een BESTAAND, GESTROOMLIJND TOOL** in het dashboard — scans draaien autonoom, voorstel-templates staan klaar, leads worden auto-enriched. Reflecteer dit in de tijdsschatting:
+    - **Sales Engine batch** (ochtend 09:00-10:30 slot): 30-45 min is voldoende, niet 90 min. Stappen: (a) batch starten via UI 5min (b) wachten op output terwijl je parallel iets anders doet (c) 10-15 top-results reviewen + selecteren 15min (d) DM'en via pre-filled templates 15min. Als werk < 90 min → maak blok korter en vul reststuk met een kleine taak.
+    - **Pitch van een lead uit `leads_pipeline[]`** (bv. Ambari/Teamjobby): **30 min is normaal, niet 60**. Scan is al gebeurd, template staat klaar, waarde en bedrijfsinfo zitten in de lead-row. Stappen: (a) open voorstel-template 2min (b) vul bedrag + 2 concrete automation-haakjes uit scan 15min (c) review + verstuur 10min. 60 min alleen als je een Loom opneemt.
+    - NIET stappen bedenken als "Google Maps scraper runnen", "Sales Engine dashboard openen" of "scan queuen" — dat is overbodig boilerplate dat geen tijd kost.
 
-15. **Claude-taken (uitvoerder=claude) krijgen een `parallelActiviteit`-veld**: 1 zin over wat Sem handmatig kan doen terwijl Claude autonoom draait in VSCode. Bv. `"parallelActiviteit": "Ambari voorstel-mail afronden in aparte tab (geen conflict met huidige project)"`. Regels:
+15. **Gap-filling met kleine taken (VERPLICHT)**: als een blok korter is dan de ingeplande slot-duur, vul de rest niet met buffer maar met een **kleine taak uit `taken[]` < 30 min** die in die tijd past. Kijk specifiek naar:
+    - Taken met `prioriteit: "hoog"` die kort zijn
+    - Taken met `uitvoerder: "handmatig"` en geschatteDuur ≤ 30 min
+    - Quick wins (configuratie-updates, documentatie, kleine bug fixes)
+    Liever 3 korte taken achter elkaar dan 1 buffer van 30 min.
+
+16. **Claude-taken (uitvoerder=claude) krijgen een `parallelActiviteit`-veld**: 1 zin over wat Sem handmatig kan doen terwijl Claude autonoom draait in VSCode. Bv. `"parallelActiviteit": "Ambari voorstel-mail afronden in aparte tab (geen conflict met huidige project)"`. Regels:
     - Alleen voor blokken waar `taakId` hoort bij een taak met `uitvoerder: "claude"`.
     - Parallel-taak MOET niet conflicteren met de Claude-taak (geen git-conflict, niet hetzelfde bestand).
     - Liefst iets uit `taken[]` met `uitvoerder: "handmatig"` dat ~10-30 min duurt.
