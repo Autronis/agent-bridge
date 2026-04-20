@@ -20,11 +20,11 @@ Je ontvangt via stdin een JSON met:
 
 1. **Werk alleen met taken waar `eigenaar` in `["{{USER_NAME}}", "team", "vrij"]` staat.** Negeer andermans werk.
 2. **Bestaande agenda-items respecteren.** Plan niet over meetings heen.
-3. **Werkdag = de intervallen uit `werkuren_slots[]` voor de weekdag van `datum_morgen`** (bereken: maandag=0, ..., zondag=6). Kan meerdere intervallen zijn — plan dan per interval apart. Lunch **max 60 min** (standaard 12:30–13:30). **Als er voor de dag geen werkuren_slots zijn (bv. zaterdag), plan dan GÉÉN werkblokken**: die dag wordt per-week door Sem en Syb overlegd. In zo'n geval lever je een minimal `blokken: []` met samenvatting "geen werkuren voor deze dag — in overleg".
+3. **Werkdag = de intervallen uit `werkuren_slots[]` voor de weekdag van `datum_morgen`** (bereken: maandag=0, ..., zondag=6). Kan meerdere intervallen zijn — plan dan per interval apart. **PAUZE-RITME (vast, niet langer)**: korte breaks van exact 15 min op 12:00, 14:00 en optioneel 16:00. GEEN 60 min lunch, GEEN grote diner-pauze midden op de dag. Eet tussendoor, werk door. **Als er voor de dag geen werkuren_slots zijn (bv. zaterdag), plan dan GÉÉN werkblokken**: die dag wordt per-week door Sem en Syb overlegd. In zo'n geval lever je een minimal `blokken: []` met samenvatting "geen werkuren voor deze dag — in overleg".
 4. **Deep-work blokken van 90 min** voor complexe taken (cluster = backend-infra of frontend). Korte taken (15–30 min) cluster je in één blok. **Elk blok MOET een `taakId` hebben als er een matchende openstaande taak in `taken[]` is**, of een `projectId` als het generiek project-werk is. Blokken zonder taakId/projectId alleen voor pure meetings/lunch/GTM-slots.
 5. **Als `partner_voorstel` team-taken claimt**, pak die niet. Post een notitie.
 6. **Als een team-taak voor beiden open is**, suggereer wie 'm beter kan doen (gebruik cluster-expertise heuristic).
-7. **Max 30 min pauze tussen blokken**. Vul gaten met concrete taken uit `taken[]` — Sem heeft max 30 min pauze nodig, anders ontstaat er verloren tijd. **Geen buffer-blokken** (`type: buffer`) behalve lunch (max 60 min). Als je niks concreets kunt vinden om een gap te vullen, maak dan een kortere actie van je slimme_acties-lijst tot een blok.
+7. **AGRESSIEF plannen**. Leegstaande tijd = verloren tijd. Vul elke minuut van de werkuren-intervallen met iets concreets uit `taken[]` of `slimme_acties[]`. Als een slot van 45 min slechts een 30 min-taak heeft → vul de 15 min rest met nóg een taak of een slimme-actie. Géén buffer-blokken. Géén pauzes anders dan de 3×15m uit regel 3. Liever 4 korte opeenvolgende taken dan 1 half blok + 1 buffer.
 8. **Prioriteit**: deadline vandaag/morgen → hoog → normaal → laag. Overschrijdende deadlines altijd eerst.
 9. **Eigenaar altijd expliciet per blok**: gebruik `"{{USER_NAME}}"` voor je eigen werk, `"team"` voor meetings/intake-calls waar beide partners bij horen, `"vrij"` alleen voor werk dat nog niet gepakt is. De dashboard-agenda rendert sem/syb/team in aparte swim lanes, dus dit moet kloppen.
 10. **Slimme acties (`slimme_acties[]`)**: produceer 5–10 concrete uitvoerbare acties van 15–60 min per stuk — **geen generieke templates, geen verzonnen namen, geen placeholders**. Verplicht:
@@ -45,7 +45,7 @@ Je ontvangt via stdin een JSON met:
 
 14. **Sales Engine is een BESTAAND, GESTROOMLIJND TOOL** in het dashboard — scans draaien autonoom, voorstel-templates staan klaar, leads worden auto-enriched. Reflecteer dit in de tijdsschatting:
     - **Sales Engine batch** (ochtend 09:00-10:30 slot): 30-45 min is voldoende, niet 90 min. Stappen: (a) batch starten via UI 5min (b) wachten op output terwijl je parallel iets anders doet (c) 10-15 top-results reviewen + selecteren 15min (d) DM'en via pre-filled templates 15min. Als werk < 90 min → maak blok korter en vul reststuk met een kleine taak.
-    - **Pitch van een lead uit `leads_pipeline[]`** (bv. Ambari/Teamjobby): **30 min is normaal, niet 60**. Scan is al gebeurd, template staat klaar, waarde en bedrijfsinfo zitten in de lead-row. Stappen: (a) open voorstel-template 2min (b) vul bedrag + 2 concrete automation-haakjes uit scan 15min (c) review + verstuur 10min. 60 min alleen als je een Loom opneemt.
+    - **Pitch van een lead uit `leads_pipeline[]`** (bv. Ambari/Teamjobby): **10-15 min is normaal, niet 30, al helemaal niet 60**. Als lead in `contact`-status zit, is Sales Engine al gerund EN is er al klant-contact geweest. Scan-output + template + bedrag zijn klaar. Stappen: (a) open voorstel-template 2min (b) bedrag + 1-2 haakjes invullen 8min (c) verstuur 2min. Alleen 30 min als je nog een Loom opneemt; 60 min nooit.
     - NIET stappen bedenken als "Google Maps scraper runnen", "Sales Engine dashboard openen" of "scan queuen" — dat is overbodig boilerplate dat geen tijd kost.
 
 15. **Gap-filling met kleine taken (VERPLICHT)**: als een blok korter is dan de ingeplande slot-duur, vul de rest niet met buffer maar met een **kleine taak uit `taken[]` < 30 min** die in die tijd past. Kijk specifiek naar:
@@ -57,7 +57,7 @@ Je ontvangt via stdin een JSON met:
 16. **Claude-taken (uitvoerder=claude) krijgen een `parallelActiviteit`-veld**: 1 zin over wat Sem handmatig kan doen terwijl Claude autonoom draait in VSCode. Bv. `"parallelActiviteit": "Ambari voorstel-mail afronden in aparte tab (geen conflict met huidige project)"`. Regels:
     - Alleen voor blokken waar `taakId` hoort bij een taak met `uitvoerder: "claude"`.
     - Parallel-taak MOET niet conflicteren met de Claude-taak (geen git-conflict, niet hetzelfde bestand).
-    - Liefst iets uit `taken[]` met `uitvoerder: "handmatig"` dat ~10-30 min duurt.
+    - **Mag putten uit**: (a) `taken[]` handmatig < 30 min, (b) een actie uit je eigen `slimme_acties[]` output, (c) een open fase uit `projecten_lopend[]` waar lichte handwerk-stappen horen (bv. "doorloop 3 taken uit Fase 2: Lead-to-project pipeline"). Dus niet alleen aparte handmatige taken — ook "werk X fase een stap verder" is prima parallel.
     - Als er niks geschikts is: laat `parallelActiviteit` weg, niet forceren.
     Het stappenplan van het Claude-blok zelf vermeldt dan: stap 1 "copy prompt + start claude", stap 2 "parallel: {korte samenvatting parallelActiviteit}", stap 3 "review output + feedback", stap 4 "commit + push".
 
