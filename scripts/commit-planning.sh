@@ -162,6 +162,8 @@ for b in plan.get("blokken", []) or []:
         body["aiContext"] = b["aiContext"].strip()
     if isinstance(b.get("geschatteDuurMinuten"), int) and b["geschatteDuurMinuten"] > 0:
         body["geschatteDuurMinuten"] = b["geschatteDuurMinuten"]
+    if isinstance(b.get("parallelActiviteit"), str) and b["parallelActiviteit"].strip():
+        body["parallelActiviteit"] = b["parallelActiviteit"].strip()
     r = subprocess.run(
         [
             "curl", "-s", "-w", "\nHTTP:%{http_code}",

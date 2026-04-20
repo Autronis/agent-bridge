@@ -41,7 +41,16 @@ Je ontvangt via stdin een JSON met:
     - `stappenplan`: array van `{ stap: "concrete actie in imperatief", duurMin: <int> }` — 2 tot 6 stappen, elk specifiek uitvoerbaar. Som van `duurMin` moet kloppen met de blok-duur (start-eind). Geen vage stappen als "bespreken" of "doorlopen" — altijd iets uitvoerbaars ("Open voorstel-mail template", "Vul €-bedrag + scope samenvatting in").
     - `geschatteDuurMinuten`: totale schatting in minuten (= som stappen).
     - `aiContext`: 1-3 zinnen vrije tekst met relevante achtergrond die Sem morgen snel moet weten zonder terug naar het dashboard te zoeken (bv. "Ambari zit in contact-fase sinds 15 april, laatste e-mail 3 dagen terug, scan-score was 8/10 op automatiseringspotentieel — hang het voorstel op aan hun orderproces-knelpunt"). Bij lead-pitches: noem status + waarde + laatste interactie. Bij dev-taken: noem het concrete knelpunt en de verwachte valkuil. **Geen context-dump; alleen wat niet af te leiden is uit de titel**.
-    Meetings/lunch/GTM-slots zonder concrete uitvoer-stappen mogen deze velden weglaten, maar een Sales Engine batch krijgt ze ook (stappen = 10 scans runnen, DM templates, enz.).
+    Meetings/lunch/GTM-slots zonder concrete uitvoer-stappen mogen deze velden weglaten.
+
+14. **Sales Engine is een BESTAAND TOOL** in het dashboard. Bij Sales Engine batch-blokken NIET stappen bedenken als "Google Maps scraper runnen" of "Sales Engine dashboard openen" — dat is alsof je een bestuurder leert gas geven. Houd stappen strikt: (a) batch starten via UI, (b) wachten op output (laat de tijd lopen = PARALLEL met andere taak), (c) top-results reviewen, (d) DM'en. Voor pitches van échte leads uit `leads_pipeline[]`: stappenplan focust op voorstel-draft + verzenden, niet op "scan openen" (scan is al gebeurd als lead in pipeline staat).
+
+15. **Claude-taken (uitvoerder=claude) krijgen een `parallelActiviteit`-veld**: 1 zin over wat Sem handmatig kan doen terwijl Claude autonoom draait in VSCode. Bv. `"parallelActiviteit": "Ambari voorstel-mail afronden in aparte tab (geen conflict met huidige project)"`. Regels:
+    - Alleen voor blokken waar `taakId` hoort bij een taak met `uitvoerder: "claude"`.
+    - Parallel-taak MOET niet conflicteren met de Claude-taak (geen git-conflict, niet hetzelfde bestand).
+    - Liefst iets uit `taken[]` met `uitvoerder: "handmatig"` dat ~10-30 min duurt.
+    - Als er niks geschikts is: laat `parallelActiviteit` weg, niet forceren.
+    Het stappenplan van het Claude-blok zelf vermeldt dan: stap 1 "copy prompt + start claude", stap 2 "parallel: {korte samenvatting parallelActiviteit}", stap 3 "review output + feedback", stap 4 "commit + push".
 
 ## Output format (JSON, ALLEEN JSON, geen markdown)
 
@@ -65,7 +74,8 @@ Je ontvangt via stdin een JSON met:
         { "stap": "Concrete actie 1", "duurMin": 30 },
         { "stap": "Concrete actie 2", "duurMin": 60 }
       ],
-      "aiContext": "1-3 zinnen relevante achtergrond die Sem morgen snel moet weten."
+      "aiContext": "1-3 zinnen relevante achtergrond die Sem morgen snel moet weten.",
+      "parallelActiviteit": "alleen voor uitvoerder=claude taken — 1 zin handmatige taak parallel"
     }
   ],
   "team_taken_voorstel": [
