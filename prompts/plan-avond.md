@@ -54,12 +54,26 @@ Je ontvangt via stdin een JSON met:
     - Quick wins (configuratie-updates, documentatie, kleine bug fixes)
     Liever 3 korte taken achter elkaar dan 1 buffer van 30 min.
 
-16. **Claude-taken (uitvoerder=claude) krijgen een `parallelActiviteit`-veld**: 1 zin over wat Sem handmatig kan doen terwijl Claude autonoom draait in VSCode. Bv. `"parallelActiviteit": "Ambari voorstel-mail afronden in aparte tab (geen conflict met huidige project)"`. Regels:
+16. **Claude-taken (uitvoerder=claude) krijgen een `parallelActiviteit`-object**: wat Sem handmatig kan doen terwijl Claude autonoom draait in VSCode. Regels:
     - Alleen voor blokken waar `taakId` hoort bij een taak met `uitvoerder: "claude"`.
     - Parallel-taak MOET niet conflicteren met de Claude-taak (geen git-conflict, niet hetzelfde bestand).
-    - **Mag putten uit**: (a) `taken[]` handmatig < 30 min, (b) een actie uit je eigen `slimme_acties[]` output, (c) een open fase uit `projecten_lopend[]` waar lichte handwerk-stappen horen (bv. "doorloop 3 taken uit Fase 2: Lead-to-project pipeline"). Dus niet alleen aparte handmatige taken — ook "werk X fase een stap verder" is prima parallel.
-    - Als er niks geschikts is: laat `parallelActiviteit` weg, niet forceren.
-    Het stappenplan van het Claude-blok zelf vermeldt dan: stap 1 "copy prompt + start claude", stap 2 "parallel: {korte samenvatting parallelActiviteit}", stap 3 "review output + feedback", stap 4 "commit + push".
+    - **Mag putten uit**: (a) `taken[]` handmatig < 30 min, (b) een actie uit je eigen `slimme_acties[]` output, (c) een open fase uit `projecten_lopend[]` waar lichte handwerk-stappen horen. Ook "werk X fase een stap verder" is prima parallel.
+    - Als er niks geschikts is: laat `parallelActiviteit` weg.
+    Het stappenplan van het Claude-blok zelf vermeldt: stap 1 "copy prompt + start claude", stap 2 "parallel: {parallelActiviteit.titel}", stap 3 "review output + feedback", stap 4 "commit + push".
+
+    **Format (VERPLICHT object, geen string)**:
+    ```json
+    "parallelActiviteit": {
+      "titel": "Herlees Ambari + Teamjobby scans",
+      "duurMin": 20,
+      "pijler": "sales_engine",
+      "cluster": "klantcontact"
+    }
+    ```
+    - `titel`: korte imperatief, max 60 tekens (past visueel naast het Claude-blok)
+    - `duurMin`: realistische schatting (meestal 10-30, past binnen de Claude-wachttijd)
+    - `pijler`: één van sales_engine / content / inbound / netwerk / delivery / intern / admin — UI kleurt het blok met de pijler-accent
+    - `cluster`: één van backend-infra / frontend / klantcontact / content / admin / research — UI toont als cluster-badge
 
 ## Output format (JSON, ALLEEN JSON, geen markdown)
 
@@ -84,7 +98,12 @@ Je ontvangt via stdin een JSON met:
         { "stap": "Concrete actie 2", "duurMin": 60 }
       ],
       "aiContext": "1-3 zinnen relevante achtergrond die Sem morgen snel moet weten.",
-      "parallelActiviteit": "alleen voor uitvoerder=claude taken — 1 zin handmatige taak parallel"
+      "parallelActiviteit": {
+        "titel": "Parallel-taak titel",
+        "duurMin": 20,
+        "pijler": "sales_engine",
+        "cluster": "klantcontact"
+      }
     }
   ],
   "team_taken_voorstel": [
