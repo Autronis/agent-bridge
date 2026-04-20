@@ -45,7 +45,8 @@ Je ontvangt via stdin een JSON met:
 
 14. **Sales Engine is een BESTAAND, GESTROOMLIJND TOOL** in het dashboard — scans draaien autonoom, voorstel-templates staan klaar, leads worden auto-enriched. Reflecteer dit in de tijdsschatting:
     - **Sales Engine batch** (ochtend 09:00-10:30 slot): 30-45 min is voldoende, niet 90 min. Stappen: (a) batch starten via UI 5min (b) wachten op output terwijl je parallel iets anders doet (c) 10-15 top-results reviewen + selecteren 15min (d) DM'en via pre-filled templates 15min. Als werk < 90 min → maak blok korter en vul reststuk met een kleine taak.
-    - **Pitch van een lead uit `leads_pipeline[]`** (bv. Ambari/Teamjobby): **10-15 min is normaal, niet 30, al helemaal niet 60**. Als lead in `contact`-status zit, is Sales Engine al gerund EN is er al klant-contact geweest. Scan-output + template + bedrag zijn klaar. Stappen: (a) open voorstel-template 2min (b) bedrag + 1-2 haakjes invullen 8min (c) verstuur 2min. Alleen 30 min als je nog een Loom opneemt; 60 min nooit.
+    - **Pitch van een lead uit `leads_pipeline[]`** (bv. Ambari/Teamjobby): **10-15 min is normaal**. Als lead in `contact`-status zit, is Sales Engine al gerund EN is er al klant-contact geweest. Scan-output + template + bedrag zijn klaar. Stappen: (a) open voorstel-template 2min (b) bedrag + 1-2 haakjes invullen 8min (c) verstuur 2min.
+    - **GEEN pitch plannen voor leads die wachten op reactie** (status=offerte wordt al gefilterd, maar check ook `volgendeActie`: als die expliciet "wacht op reactie" / "afwachten" / "opvolgen na [datum]" zegt, NIET pitchen — de bal ligt bij de prospect). Pitch alleen wanneer de lead **actief** is: status=nieuw (eerste pitch) of status=contact met `volgendeActie` in de geest van "voorstel opstellen" / "bellen" / "afspraak maken". Als er niks te pitchen valt uit de pipeline, plan dan generieke Sales Engine outreach naar nieuwe prospects.
     - NIET stappen bedenken als "Google Maps scraper runnen", "Sales Engine dashboard openen" of "scan queuen" — dat is overbodig boilerplate dat geen tijd kost.
 
 15. **Gap-filling met kleine taken (VERPLICHT)**: als een blok korter is dan de ingeplande slot-duur, vul de rest niet met buffer maar met een **kleine taak uit `taken[]` < 30 min** die in die tijd past. Kijk specifiek naar:
@@ -78,7 +79,7 @@ Je ontvangt via stdin een JSON met:
       }
     ]
     ```
-    - **Plan meerdere parallel-taken** als de Claude-taak lang duurt (bv. 90m Claude → 3× parallel van 15-30m). Som van duurMin moet ≤ Claude-blok-duur zijn. Liever 3 korte parallel-taken dan 1 lange.
+    - **Plan zoveel parallel-taken dat de som duurMin = Claude-blok-duur** (of max 5 min minder voor review). Een 90m Claude = 90m parallel (bv. 3×30m of 4×20-25m of 2×40m+1×10m). **Nooit leegstand onder parallel-blokken** — "claude werkt door…" label is nog acceptabel voor <5 min rest, maar niet voor 30+ min. Liever meer korte parallel-taken dan 1 lange.
     - `titel`: korte imperatief, max 60 tekens
     - `duurMin`: realistische schatting per parallel-taak
     - `pijler`: één van sales_engine / content / inbound / netwerk / delivery / intern / admin
