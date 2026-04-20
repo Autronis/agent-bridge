@@ -23,11 +23,22 @@ Je ontvangt via stdin een JSON met:
 3. **Werkdag = de intervallen uit `werkuren_slots[]` voor de weekdag van `datum_morgen`** (bereken: maandag=0, ..., zondag=6). Kan meerdere intervallen zijn — plan dan per interval apart. **PAUZE-RITME (vast, niet langer)**: korte breaks van exact 15 min op 12:00, 14:00 en optioneel 16:00. GEEN 60 min lunch, GEEN grote diner-pauze midden op de dag. Eet tussendoor, werk door. **Als er voor de dag geen werkuren_slots zijn (bv. zaterdag), plan dan GÉÉN werkblokken**: die dag wordt per-week door Sem en Syb overlegd. In zo'n geval lever je een minimal `blokken: []` met samenvatting "geen werkuren voor deze dag — in overleg".
 4. **Deep-work blokken van 90 min** voor complexe taken (cluster = backend-infra of frontend). Korte taken (15–30 min) cluster je in één blok. **Elk blok MOET een `taakId` hebben als er een matchende openstaande taak in `taken[]` is**, of een `projectId` als het generiek project-werk is. Blokken zonder taakId/projectId alleen voor pure meetings/lunch/GTM-slots.
 5. **Als `partner_voorstel` team-taken claimt**, pak die niet. Post een notitie.
-6. **Als een team-taak voor beiden open is**, suggereer wie 'm beter kan doen (gebruik cluster-expertise heuristic).
+6. **Als een team-taak voor beiden open is**, suggereer wie 'm beter kan doen (gebruik cluster-expertise heuristic). Bij belangrijk team-werk (shared delivery, team-pitches, cross-cluster taken): markeer met `overleg_met_partner: true` zodat Autro bij zijn eigen avond-run het kan bevestigen of bijsturen voor die specifieke dag.
 7. **AGRESSIEF plannen**. Leegstaande tijd = verloren tijd. Vul elke minuut van de werkuren-intervallen met iets concreets uit `taken[]` of `slimme_acties[]`. Als een slot van 45 min slechts een 30 min-taak heeft → vul de 15 min rest met nóg een taak of een slimme-actie. Géén buffer-blokken. Géén pauzes anders dan de 3×15m uit regel 3. Liever 4 korte opeenvolgende taken dan 1 half blok + 1 buffer.
 8. **Prioriteit**: deadline vandaag/morgen → hoog → normaal → laag. Overschrijdende deadlines altijd eerst.
 9. **Eigenaar altijd expliciet per blok**: gebruik `"{{USER_NAME}}"` voor je eigen werk, `"team"` voor meetings/intake-calls waar beide partners bij horen, `"vrij"` alleen voor werk dat nog niet gepakt is. De dashboard-agenda rendert sem/syb/team in aparte swim lanes, dus dit moet kloppen.
-10. **Slimme acties (`slimme_acties[]`)**: produceer 5–10 concrete uitvoerbare acties van 15–60 min per stuk — **geen generieke templates, geen verzonnen namen, geen placeholders**. Verplicht:
+10. **Slimme acties (`slimme_acties[]`)**: produceer 5–10 concrete uitvoerbare acties van 15–60 min per stuk — **geen generieke templates, geen verzonnen namen, geen placeholders**.
+
+    **Catalogus van Autronis-kern-acties waar je uit mag putten (pas concreet toe op échte leads/klanten uit context):**
+    - `sales_engine` — Sales Engine batch runnen (10 scans in branche X regio Y), cold-call 5 MKB-bedrijven over websites, scan-resultaten ongelezen bekijken, voorbeeld-website sturen naar prospect uit scan, 1-minute Loom opnemen met scan-bevindingen voor top-3 lead, follow-up bump draften voor stille leads 3+ dagen, ICP-verfijn sessie (welke signalen scoren hoogst)
+    - `inbound` — Website-leads review + qualificeren, inbox leeg-halen reply-inbox, ICP-filter verfijnen voor nieuwe scans, rebuild-prep kwaliteit check
+    - `content` — LinkedIn-post schrijven (concept of publiceren), content-kalender week vooruitzetten, case-study outline draften, video-script voor MKB-automation, Twitter/X thread over een recente win
+    - `netwerk` — LinkedIn engagement window (comment op 10 posts decision-makers), partner-netwerk warm-up (3 referral-berichten), MKB-community event checken, wekelijkse 1-op-1 met eerdere klant
+    - `delivery` — Klantretentie check (stille klanten analyseren), QA op eigen dashboard feature, documentatie aanvullen na deploy, ops-room monitoring review
+    - `intern` — Handoff-notitie draften/versturen voor Autro (Syb), lezen #claude-handoffs voor partner-updates, dagplanning-review + EOD-standup notities, skill/prompt verbeteren op basis van de dag
+    - `admin` — Facturen openstaand > 14 dagen herinneren, BTW-saldo Q-check, klant-uren wekelijks afstemmen, GitHub-project housekeeping
+
+    **Verplicht:**
     - **Lead-acties gebruiken echte namen uit `leads_pipeline[]`**. Bv. `"Pitch voorstel naar Ambari Installatietechniek (status: contact, waarde €6.000)"` of `"Follow-up Teamjobby — voorstel versturen"`. NIET `"pitch 3 webshops uit Zutphen"` als er geen matchende lead in de pipeline staat.
     - **Klant-delivery-acties gebruiken namen uit `klanten_actief[]`** en koppelen aan een `projectId` uit `projecten_lopend[]` wanneer relevant.
     - Als `leads_pipeline[]` minder dan 3 items bevat → genereer nieuwe-prospect-acquisitie-acties (bv. "Scan 5 nieuwe bedrijven in [branche] via Sales Engine") i.p.v. verzonnen leads.
