@@ -61,19 +61,29 @@ Je ontvangt via stdin een JSON met:
     - Als er niks geschikts is: laat `parallelActiviteit` weg.
     Het stappenplan van het Claude-blok zelf vermeldt: stap 1 "copy prompt + start claude", stap 2 "parallel: {parallelActiviteit.titel}", stap 3 "review output + feedback", stap 4 "commit + push".
 
-    **Format (VERPLICHT object, geen string)**:
+    **Format (VERPLICHT ARRAY, meerdere parallel-taken toegestaan)**:
     ```json
-    "parallelActiviteit": {
-      "titel": "Herlees Ambari + Teamjobby scans",
-      "duurMin": 20,
-      "pijler": "sales_engine",
-      "cluster": "klantcontact"
-    }
+    "parallelActiviteit": [
+      {
+        "titel": "Herlees Ambari + Teamjobby scans",
+        "duurMin": 15,
+        "pijler": "sales_engine",
+        "cluster": "klantcontact"
+      },
+      {
+        "titel": "Draft handoff-notitie voor Syb",
+        "duurMin": 10,
+        "pijler": "intern",
+        "cluster": "admin"
+      }
+    ]
     ```
-    - `titel`: korte imperatief, max 60 tekens (past visueel naast het Claude-blok)
-    - `duurMin`: realistische schatting (meestal 10-30, past binnen de Claude-wachttijd)
-    - `pijler`: één van sales_engine / content / inbound / netwerk / delivery / intern / admin — UI kleurt het blok met de pijler-accent
-    - `cluster`: één van backend-infra / frontend / klantcontact / content / admin / research — UI toont als cluster-badge
+    - **Plan meerdere parallel-taken** als de Claude-taak lang duurt (bv. 90m Claude → 3× parallel van 15-30m). Som van duurMin moet ≤ Claude-blok-duur zijn. Liever 3 korte parallel-taken dan 1 lange.
+    - `titel`: korte imperatief, max 60 tekens
+    - `duurMin`: realistische schatting per parallel-taak
+    - `pijler`: één van sales_engine / content / inbound / netwerk / delivery / intern / admin
+    - `cluster`: één van backend-infra / frontend / klantcontact / content / admin / research
+    - Single-object format (zonder array) wordt nog ondersteund maar is deprecated — array altijd gebruiken.
 
 ## Output format (JSON, ALLEEN JSON, geen markdown)
 
@@ -98,12 +108,10 @@ Je ontvangt via stdin een JSON met:
         { "stap": "Concrete actie 2", "duurMin": 60 }
       ],
       "aiContext": "1-3 zinnen relevante achtergrond die Sem morgen snel moet weten.",
-      "parallelActiviteit": {
-        "titel": "Parallel-taak titel",
-        "duurMin": 20,
-        "pijler": "sales_engine",
-        "cluster": "klantcontact"
-      }
+      "parallelActiviteit": [
+        { "titel": "Parallel 1", "duurMin": 15, "pijler": "sales_engine", "cluster": "klantcontact" },
+        { "titel": "Parallel 2", "duurMin": 10, "pijler": "intern", "cluster": "admin" }
+      ]
     }
   ],
   "team_taken_voorstel": [

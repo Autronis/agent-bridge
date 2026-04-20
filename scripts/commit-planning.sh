@@ -162,12 +162,16 @@ for b in plan.get("blokken", []) or []:
         body["aiContext"] = b["aiContext"].strip()
     if isinstance(b.get("geschatteDuurMinuten"), int) and b["geschatteDuurMinuten"] > 0:
         body["geschatteDuurMinuten"] = b["geschatteDuurMinuten"]
-    # parallelActiviteit: nieuw format is object {titel, duurMin, pijler, cluster}
-    # — we serialiseren naar JSON-string zodat het veld op sqlite TEXT past.
-    # Oude string-format blijft ondersteund voor backward compat.
+    # parallelActiviteit: nieuw format is array van {titel, duurMin, pijler,
+    # cluster}. Single-object + string formats worden ook geaccepteerd voor
+    # backward compat; serialise naar JSON-string voor sqlite TEXT.
     pa = b.get("parallelActiviteit")
-    if isinstance(pa, dict) and pa.get("titel"):
-        body["parallelActiviteit"] = json.dumps(pa, ensure_ascii=False)
+    if isinstance(pa, list) and pa:
+        valid = [x for x in pa if isinstance(x, dict) and x.get("titel")]
+        if valid:
+            body["parallelActiviteit"] = json.dumps(valid, ensure_ascii=False)
+    elif isinstance(pa, dict) and pa.get("titel"):
+        body["parallelActiviteit"] = json.dumps([pa], ensure_ascii=False)
     elif isinstance(pa, str) and pa.strip():
         body["parallelActiviteit"] = pa.strip()
     r = subprocess.run(
