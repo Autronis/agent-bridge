@@ -79,7 +79,11 @@ Je ontvangt via stdin een JSON met:
       }
     ]
     ```
-    - **Plan zoveel parallel-taken dat de som duurMin = Claude-blok-duur** (of max 5 min minder voor review). Een 90m Claude = 90m parallel (bv. 3×30m of 4×20-25m of 2×40m+1×10m). **Nooit leegstand onder parallel-blokken** — "claude werkt door…" label is nog acceptabel voor <5 min rest, maar niet voor 30+ min. Liever meer korte parallel-taken dan 1 lange.
+    - **VERPLICHT: som duurMin van alle parallel-taken = Claude-blok-duur** (exact, of max 5 min verschil). Een 90m Claude = minstens 85m parallel. Als je niet genoeg uit `taken[]` haalt, **put uit `slimme_acties[]`** (die je zelf genereert — die zijn per definitie passend) én uit open fases van `projecten_lopend[]`. Voorbeelden:
+      * 90m Claude → 3×30m parallel óf 4×20-25m óf 2×40m+10m
+      * 60m Claude → 2×30m óf 3×20m óf 20m+20m+20m
+      * 30m Claude → 1×30m óf 2×15m
+    - Gebruik elke minuut: er is altijd iets kleins te doen (mail-inbox, LinkedIn engagement, review recente PR, content idee noteren, financiële snapshot). De "claude werkt door…" leegstand in de UI is een bug die we NIET willen zien.
     - `titel`: korte imperatief, max 60 tekens
     - `duurMin`: realistische schatting per parallel-taak
     - `pijler`: één van sales_engine / content / inbound / netwerk / delivery / intern / admin
