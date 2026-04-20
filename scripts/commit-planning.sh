@@ -156,6 +156,12 @@ for b in plan.get("blokken", []) or []:
         body["taakId"] = b["taakId"]
     if isinstance(b.get("pijler"), str) and b["pijler"].strip():
         body["pijler"] = b["pijler"].strip()
+    if isinstance(b.get("stappenplan"), list) and b["stappenplan"]:
+        body["stappenplan"] = b["stappenplan"]
+    if isinstance(b.get("aiContext"), str) and b["aiContext"].strip():
+        body["aiContext"] = b["aiContext"].strip()
+    if isinstance(b.get("geschatteDuurMinuten"), int) and b["geschatteDuurMinuten"] > 0:
+        body["geschatteDuurMinuten"] = b["geschatteDuurMinuten"]
     r = subprocess.run(
         [
             "curl", "-s", "-w", "\nHTTP:%{http_code}",
