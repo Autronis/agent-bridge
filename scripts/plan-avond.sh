@@ -123,11 +123,14 @@ log "Plan geschreven naar $PLAN_FILE"
 ENABLE_OVERLEG="${ENABLE_BRIDGE_OVERLEG:-1}"
 if [[ "$ENABLE_OVERLEG" == "1" ]]; then
   log "Post bridge-voorstel naar Discord voor $USER_NAME ↔ partner overleg..."
-  bash "$PROJECT_DIR/scripts/post-bridge-voorstel.sh" "$PLAN_FILE" 2>&1 | tee -a "$LOG" || log "post-bridge-voorstel faalde (tolerable)"
+  VOORSTEL_OUTPUT=$(bash "$PROJECT_DIR/scripts/post-bridge-voorstel.sh" "$PLAN_FILE" 2>&1 | tee -a "$LOG") || log "post-bridge-voorstel faalde (tolerable)"
+  VOORSTEL_MSG_ID=$(echo "$VOORSTEL_OUTPUT" | grep -o 'id: [0-9]*' | tail -1 | awk '{print $2}')
+  VOORSTEL_MSG_ID="${VOORSTEL_MSG_ID:-0}"
+  log "Voorstel msg ID: $VOORSTEL_MSG_ID"
 
   WAIT_SECONDS="${BRIDGE_OVERLEG_WAIT_SECONDS:-600}"
-  log "Wacht max ${WAIT_SECONDS}s op partner-reply..."
-  PARTNER_REPLY=$(bash "$PROJECT_DIR/scripts/wait-voor-reply.sh" "$WAIT_SECONDS" 2>>"$LOG" || echo "")
+  log "Wacht max ${WAIT_SECONDS}s op partner-reply (alleen replies na msg $VOORSTEL_MSG_ID)..."
+  PARTNER_REPLY=$(bash "$PROJECT_DIR/scripts/wait-voor-reply.sh" "$WAIT_SECONDS" "$VOORSTEL_MSG_ID" 2>>"$LOG" || echo "")
 
   if [[ -n "$PARTNER_REPLY" ]]; then
     log "Partner reply ontvangen ($(printf '%s' "$PARTNER_REPLY" | wc -c | tr -d ' ') chars) — reviseer plan..."

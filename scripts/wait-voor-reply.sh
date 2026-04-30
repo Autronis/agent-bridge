@@ -43,6 +43,7 @@ USER_UPPER=$(printf '%s' "$USER_NAME" | tr '[:lower:]' '[:upper:]')
 MARKER="BRIDGE-REPLY-${USER_UPPER}"
 
 MAX_WAIT="${1:-600}"   # default 10 minuten
+VOORSTEL_MSG_ID="${2:-0}"   # Discord message ID van het voorstel — replies ouder dan dit worden genegeerd
 POLL_INTERVAL=30
 
 ELAPSED=0
@@ -51,15 +52,24 @@ while [[ $ELAPSED -lt $MAX_WAIT ]]; do
   # dus de nieuwste reply zit achteraan.
   MSGS=$("$DISCORD_BOT" read 30 2>/dev/null || echo "")
 
-  REPLY_BODY=$(MSGS="$MSGS" MARKER="$MARKER" python3 <<'PY'
+  REPLY_BODY=$(MSGS="$MSGS" MARKER="$MARKER" VOORSTEL_MSG_ID="$VOORSTEL_MSG_ID" python3 <<'PY'
 import os, re, sys
 msgs = os.environ["MSGS"]
 marker = os.environ["MARKER"]
+voorstel_id = int(os.environ.get("VOORSTEL_MSG_ID", "0"))
+
 idx = msgs.rfind(marker)
 if idx == -1:
-    print("", end="")
     sys.exit(0)
-# Pak alles na marker-regel tot de volgende BRIDGE- header of max 2000 chars.
+
+if voorstel_id > 0:
+    before = msgs[:idx]
+    id_matches = list(re.finditer(r'\(id:(\d+)\)', before))
+    if id_matches:
+        reply_msg_id = int(id_matches[-1].group(1))
+        if reply_msg_id <= voorstel_id:
+            sys.exit(0)
+
 tail = msgs[idx + len(marker):]
 m = re.search(r"\nBRIDGE-", tail)
 end = m.start() if m else min(len(tail), 2000)
